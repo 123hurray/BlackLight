@@ -262,7 +262,7 @@ public class MainActivity extends ToolbarActivity implements View.OnClickListene
 			public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
 				if (position + 1 >= mFragments.length)
 					return;
-
+				mCurrent = position;
 				Fragment cur = mFragments[position];
 				Fragment next = mFragments[position + 1];
 

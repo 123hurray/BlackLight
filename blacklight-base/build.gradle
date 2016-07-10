@@ -3,9 +3,11 @@ apply plugin: 'com.android.library'
 android {
 	compileSdkVersion = COMPILED_SDK_VER
 	buildToolsVersion = BUILD_TOOLS_VER
-
 	publishNonDefault true
 
+	defaultConfig {
+		minSdkVersion 15
+	}
 	lintOptions {
 		abortOnError false
 	}
