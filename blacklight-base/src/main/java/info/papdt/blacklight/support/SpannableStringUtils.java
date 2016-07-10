@@ -25,17 +25,14 @@ import android.graphics.Typeface;
 import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
-import android.text.style.ImageSpan;
-import android.text.style.StrikethroughSpan;
-import android.text.style.StyleSpan;
-import android.text.style.URLSpan;
+import android.text.style.*;
 import android.text.util.Linkify;
 import android.util.Log;
+import info.papdt.blacklight.R;
+import info.papdt.blacklight.model.MessageModel;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import info.papdt.blacklight.model.MessageModel;
 
 import static info.papdt.blacklight.BuildConfig.DEBUG;
 
@@ -134,12 +131,31 @@ public class SpannableStringUtils
 
 				matcher = PATTERN_STYLE.matcher(ssb);
 			}
+			matcher = Pattern.compile("(全文$)").matcher(ssb);
+			while (matcher.find()) {
+				int start = matcher.start();
+				int end = matcher.end();
+				if (isInsideSpans(start, end, mySpans, ssb)) {
+					continue;
+				}
+
+				String group = matcher.group(1);
+
+				int len = group.length();
+
+				Object span = new TextAppearanceSpan(context, R.style.WeiboLongText);
+				ssb.setSpan(span, start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+			}
 		}
 
 		return SpannableString.valueOf(ssb);
 	}
 
 	public static SpannableString getSpan(Context context, MessageModel msg) {
+		if(msg.isLongText) {
+			// 过滤长微博结尾网址
+			msg.text = msg.text.replaceFirst("(： http.*?$)", "");
+		}
 		if (msg.span == null) {
 
 			if (DEBUG) {
@@ -153,6 +169,10 @@ public class SpannableStringUtils
 	}
 
 	public static SpannableString getOrigSpan(Context context, MessageModel orig) {
+		if(orig.isLongText) {
+			// 过滤长微博结尾网址
+			orig.text = orig.text.replaceFirst("(： http.*?$)", "");
+		}
 		if (orig.origSpan == null) {
 
 			if (DEBUG) {

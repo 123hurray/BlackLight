@@ -35,6 +35,8 @@ public class Constants
 
 	// Statuses
 	public static final String HOME_TIMELINE = SINA_BASE_URL + "statuses/home_timeline.json";
+	public static final String HOT_TIMELINE = SINA_BASE_URL + "statuses/show_batch.json";
+	public static final String HOT_TIMELINE_IDS = "http://weico3.weico.cc/v3/hot/weibo";
 	public static final String USER_TIMELINE = SINA_BASE_URL + "statuses/user_timeline.json";
 	public static final String BILATERAL_TIMELINE = SINA_BASE_URL + "statuses/bilateral_timeline.json";
 	public static final String MENTIONS = SINA_BASE_URL + "statuses/mentions.json";

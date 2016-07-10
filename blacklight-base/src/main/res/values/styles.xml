@@ -48,7 +48,7 @@
 		<item name="BottomViewColor">@color/action_gray</item>
 		<item name="LayerColor">@color/action_gray</item>
 		<item name="FABBackground">?attr/colorAccent</item>
-		<item name="FABNewIcon">@drawable/ic_add_white_24dp</item>
+		<item name="FABNewIcon">@drawable/ic_action_collapse_dark</item>
 		<item name="IndicatorForeground">@color/action_gray</item>
 		<item name="DrawerBackground">@color/white</item>
 		<item name="DrawerForeground">@color/action_gray</item>
@@ -134,6 +134,10 @@
 	<style name="TitleText">
 		<item name="android:textColor">@android:color/white</item>
 		<item name="android:textSize">18sp</item>
+	</style>
+	<style name="WeiboLongText">
+		<item name="android:textColor">@android:color/holo_red_dark</item>
+		<item name="android:textSize">14sp</item>
 	</style>
 
 	<style name="CardViewStyle" parent="android:Widget.TextView">

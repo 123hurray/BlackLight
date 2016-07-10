@@ -85,6 +85,23 @@ public class MessageModel implements Parcelable
 	public long id;
 	public long mid;
 	public String idstr;
+
+	public static class LongTextModel implements Parcelable {
+
+		public String longTextContent;
+
+		@Override
+		public int describeContents() {
+			return 0;
+		}
+
+		@Override
+		public void writeToParcel(Parcel dest, int flags) {
+			dest.writeString(longTextContent);
+		}
+	}
+	public LongTextModel longText;
+	public boolean isLongText = false;
 	public String text; // content of this weibo
 	public String source;
 	public boolean favorited;
@@ -145,9 +162,10 @@ public class MessageModel implements Parcelable
 		dest.writeLong(id);
 		dest.writeLong(mid);
 		dest.writeString(idstr);
+		dest.writeParcelable(longText, flags);
 		dest.writeString(text);
 		dest.writeString(source);
-		dest.writeBooleanArray(new boolean[]{favorited, truncated, liked, inSingleActivity});
+		dest.writeBooleanArray(new boolean[]{favorited, truncated, liked, inSingleActivity, isLongText});
 		dest.writeString(in_reply_to_status_id);
 		dest.writeString(in_reply_to_user_id);
 		dest.writeString(in_reply_to_screen_name);
@@ -174,10 +192,11 @@ public class MessageModel implements Parcelable
 			ret.id = in.readLong();
 			ret.mid = in.readLong();
 			ret.idstr = in.readString();
+			ret.longText = in.readParcelable(LongTextModel.class.getClassLoader());
 			ret.text = in.readString();
 			ret.source = in.readString();
 			
-			boolean[] array = new boolean[4];
+			boolean[] array = new boolean[5];
 			in.readBooleanArray(array);
 			
 			ret.favorited = array[0];
@@ -185,6 +204,7 @@ public class MessageModel implements Parcelable
             ret.liked = array[2];
 
 			ret.inSingleActivity = array[3];
+			ret.isLongText = array[4];
 			
 			ret.in_reply_to_status_id = in.readString();
 			ret.in_reply_to_user_id = in.readString();

@@ -37,6 +37,7 @@ import info.papdt.blacklight.R;
 import info.papdt.blacklight.api.attitudes.AttitudesApi;
 import info.papdt.blacklight.api.comments.NewCommentApi;
 import info.papdt.blacklight.api.statuses.PostApi;
+import info.papdt.blacklight.api.statuses.QueryIdApi;
 import info.papdt.blacklight.cache.login.LoginApiCache;
 import info.papdt.blacklight.cache.statuses.HomeTimeLineApiCache;
 import info.papdt.blacklight.cache.user.UserApiCache;
@@ -50,6 +51,8 @@ import info.papdt.blacklight.ui.statuses.RepostActivity;
 import info.papdt.blacklight.ui.statuses.SingleActivity;
 import info.papdt.blacklight.ui.statuses.StatusImageActivity;
 import info.papdt.blacklight.ui.statuses.UserTimeLineActivity;
+
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static info.papdt.blacklight.receiver.ConnectivityReceiver.isWIFI;
 
@@ -216,7 +219,6 @@ public class WeiboAdapter extends HeaderViewAdapter<WeiboAdapter.ViewHolder> {
 		View v = h.v;
 		final MessageModel msg = mClone.get(position);
 		h.msg = msg;
-
 		TextView name = h.name;
 		TextView from = h.from;
 		TextView content = h.content;
@@ -262,10 +264,6 @@ public class WeiboAdapter extends HeaderViewAdapter<WeiboAdapter.ViewHolder> {
 				}
 			}
 
-		}
-
-		if (msg.inSingleActivity) {
-			h.popup.setVisibility(View.GONE);
 		}
 
 		if (msg.user != null) {
@@ -343,7 +341,7 @@ public class WeiboAdapter extends HeaderViewAdapter<WeiboAdapter.ViewHolder> {
 	}
 
 	void buildPopup(final ViewHolder h) {
-		PopupMenu p = new PopupMenu(mContext, h.popup);
+		PopupMenu p = new PopupMenu(mContext, h.v);
 		p.inflate(R.menu.popup);
 		final Menu m = p.getMenu();
 
@@ -421,6 +419,68 @@ public class WeiboAdapter extends HeaderViewAdapter<WeiboAdapter.ViewHolder> {
 		}
 
 		return true;
+	}
+
+	private static class ShowWeiboTask extends AsyncTask<MessageModel, Void, Intent> {
+		private View card;
+		private AtomicBoolean isShowing;
+		private boolean showOrig;
+		private Context context;
+
+		public ShowWeiboTask(Context context, View card, AtomicBoolean isShowing, boolean showOrig) {
+			this.context = context;
+			this.card = card;
+			this.isShowing = isShowing;
+			this.showOrig = showOrig;
+		}
+
+		@Override
+		protected Intent doInBackground(MessageModel[] params) {
+			MessageModel msg = params[0];
+			if (!(msg instanceof CommentModel)){
+				if(msg.inSingleActivity){
+					return null;
+				}
+			}
+			Intent i = new Intent();
+			i.setAction(Intent.ACTION_MAIN);
+
+			if (msg instanceof CommentModel) {
+				if(showOrig) {
+					i.setClass(context, SingleActivity.class);
+				} else {
+					i.setClass(context, ReplyToActivity.class);
+				}
+				i.putExtra("comment", (CommentModel) msg);
+			} else {
+				i.setClass(context, SingleActivity.class);
+				if(showOrig) {
+					if (msg.retweeted_status != null) {
+						msg = msg.retweeted_status;
+					}
+				}
+				if(msg.isLongText) {
+					MessageModel newMsg = QueryIdApi.fetchStatus(String.valueOf(msg.id), true);
+					if(newMsg.isLongText) {
+						msg.text = newMsg.longText.longTextContent;
+					}
+				}
+				i.putExtra("msg", msg);
+			}
+			return i;
+		}
+
+		@Override
+		protected void onPostExecute(Intent result) {
+			if(result == null) {
+				return;
+			}
+			ActivityOptionsCompat o =
+					ActivityOptionsCompat.makeSceneTransitionAnimation(
+							(Activity) context, card, "msg");
+			ActivityCompat.startActivity((Activity) context, result, o.toBundle());
+			isShowing.set(false);
+		}
 	}
 
 	private static class DeleteTask extends AsyncTask<MessageModel, Void, Void> {
@@ -502,7 +562,6 @@ public class WeiboAdapter extends HeaderViewAdapter<WeiboAdapter.ViewHolder> {
 		public TextView attitudes;
 		public TextView orig_content;
 		public ImageView avatar;
-		public ImageView popup;
 		public TableLayout pics;
 		public CardView card;
 		public View origin_parent;
@@ -546,7 +605,6 @@ public class WeiboAdapter extends HeaderViewAdapter<WeiboAdapter.ViewHolder> {
 			origin_parent = Utility.findViewById(v, R.id.weibo_origin);
 			orig_content = Utility.findViewById(origin_parent, R.id.weibo_content);
 			avatar = Utility.findViewById(v, R.id.weibo_avatar);
-			popup = Utility.findViewById(v, R.id.weibo_popup);
 			if(viewType >= 10) {
 				pics = Utility.findViewById(origin_parent, R.id.weibo_pics);
 				TableLayout tmpPics = Utility.findViewById(v, R.id.weibo_pics);
@@ -565,7 +623,6 @@ public class WeiboAdapter extends HeaderViewAdapter<WeiboAdapter.ViewHolder> {
 			comment_and_retweet = Utility.findViewById(v, R.id.weibo_comment_and_retweet);
 
 			// Events
-			Utility.bindOnClick(this, popup, "popup");
 			Utility.bindOnClick(this, avatar, "showUser");
 			Utility.bindOnClick(this, card, "show");
 			Utility.bindOnClick(this, origin_parent, "showOrig");
@@ -594,51 +651,23 @@ public class WeiboAdapter extends HeaderViewAdapter<WeiboAdapter.ViewHolder> {
 			i.putExtra("user", msg.user);
 			context.startActivity(i);
 		}
-
+		private AtomicBoolean isShowing = new AtomicBoolean(false);
 		@Binded
 		void show() {
-			if (!(msg instanceof CommentModel)){
-				if(msg.inSingleActivity){
-					return;
-				}
+			if(!isShowing.compareAndSet(false, true)) {
+				return;
 			}
-			Intent i = new Intent();
-			i.setAction(Intent.ACTION_MAIN);
-
-			if (msg instanceof CommentModel) {
-				i.setClass(context, ReplyToActivity.class);
-				i.putExtra("comment", (CommentModel) msg);
-			} else {
-				i.setClass(context, SingleActivity.class);
-				i.putExtra("msg", msg);
-			}
-
-			ActivityOptionsCompat o =
-				ActivityOptionsCompat.makeSceneTransitionAnimation(
-					(Activity) context, card, "msg");
-
-			ActivityCompat.startActivity((Activity) context, i, o.toBundle());
+			ShowWeiboTask task = new ShowWeiboTask(context, card, isShowing, false);
+			task.execute(msg);
 		}
 
 		@Binded
 		void showOrig() {
-			Intent i = new Intent();
-			i.setAction(Intent.ACTION_MAIN);
-			i.setClass(context, SingleActivity.class);
-
-			if (!(msg instanceof CommentModel)) {
-				if (msg.retweeted_status != null) {
-					i.putExtra("msg", msg.retweeted_status);
-				}
-			} else {
-				i.putExtra("msg", ((CommentModel) msg).status);
+			if(!isShowing.compareAndSet(false, true)) {
+				return;
 			}
-
-			ActivityOptionsCompat o =
-				ActivityOptionsCompat.makeSceneTransitionAnimation(
-				(Activity) context, origin_parent, "msg");
-
-			ActivityCompat.startActivity((Activity) context, i, o.toBundle());
+			ShowWeiboTask task = new ShowWeiboTask(context, origin_parent, isShowing, true);
+			task.execute(msg);
 		}
 
 		void repost() {

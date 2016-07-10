@@ -36,24 +36,14 @@ import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AlertDialog;
 import android.util.Log;
-import android.view.Gravity;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewGroup;
-import android.view.ViewTreeObserver;
+import android.view.*;
 import android.view.animation.AnimationUtils;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
-
 import com.quinny898.library.persistentsearch.SearchBox;
 import com.quinny898.library.persistentsearch.SearchResult;
-
-import java.util.List;
-import java.util.Random;
-
 import info.papdt.blacklight.R;
 import info.papdt.blacklight.api.friendships.GroupsApi;
 import info.papdt.blacklight.cache.login.LoginApiCache;
@@ -76,10 +66,9 @@ import info.papdt.blacklight.ui.favorites.FavListFragment;
 import info.papdt.blacklight.ui.login.LoginActivity;
 import info.papdt.blacklight.ui.search.SearchActivity;
 import info.papdt.blacklight.ui.settings.SettingsActivity;
-import info.papdt.blacklight.ui.statuses.HomeTimeLineFragment;
-import info.papdt.blacklight.ui.statuses.MentionsTimeLineFragment;
-import info.papdt.blacklight.ui.statuses.NewPostActivity;
-import info.papdt.blacklight.ui.statuses.UserTimeLineActivity;
+import info.papdt.blacklight.ui.statuses.*;
+
+import java.util.List;
 
 import static info.papdt.blacklight.BuildConfig.DEBUG;
 
@@ -128,6 +117,7 @@ public class MainActivity extends ToolbarActivity implements View.OnClickListene
 	// Fragments
 	private Fragment[] mFragments = new Fragment[]{
 		new HomeTimeLineFragment(),
+		new HotTimeLineFragment(),
 		new CommentTimeLineFragment(),
 		new MentionsTimeLineFragment(),
 		new CommentMentionsTimeLineFragment(),
@@ -250,6 +240,7 @@ public class MainActivity extends ToolbarActivity implements View.OnClickListene
 		mTopWrapper.setAlpha(0f);
 		final Drawable[] pageIcons = new Drawable[] {
 			getResources().getDrawable(R.drawable.ic_drawer_home),
+			getResources().getDrawable(R.drawable.ic_like),
 			getResources().getDrawable(R.drawable.ic_drawer_comment),
 			getResources().getDrawable(R.drawable.ic_drawer_at),
 			getResources().getDrawable(R.drawable.ic_drawer_at),
@@ -782,22 +773,21 @@ public class MainActivity extends ToolbarActivity implements View.OnClickListene
 	}
 
 	@Override
-	public void onClick(View v) {
+	public boolean onLongClick(View v) {
 		Intent i = new Intent();
 		i.setAction(Intent.ACTION_MAIN);
 		i.setClass(this, NewPostActivity.class);
 		startActivity(i);
+		return true;
 	}
 
 	@Override
-	public boolean onLongClick(View v) {
+	public void onClick(View v) {
 		Fragment f = mFragments[mCurrent];
 
 		if (f instanceof Refresher) {
 			((Refresher) f).doRefresh();
 		}
-
-		return true;
 	}
 
 	public void hideFAB() {

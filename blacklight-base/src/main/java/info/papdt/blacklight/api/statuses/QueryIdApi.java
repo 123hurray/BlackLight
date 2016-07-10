@@ -20,15 +20,12 @@
 package info.papdt.blacklight.api.statuses;
 
 import android.text.TextUtils;
-
 import com.google.gson.Gson;
-
-import org.json.JSONObject;
-
 import info.papdt.blacklight.api.BaseApi;
 import info.papdt.blacklight.api.Constants;
 import info.papdt.blacklight.model.MessageModel;
 import info.papdt.blacklight.support.http.WeiboParameters;
+import org.json.JSONObject;
 
 /* Fetches messages published by an exact user */
 public class QueryIdApi extends BaseApi
@@ -73,6 +70,10 @@ public class QueryIdApi extends BaseApi
 	}
 
 	public static MessageModel fetchStatus(String mid) {
+		return fetchStatus(mid, false);
+	}
+
+	public static MessageModel fetchStatus(String mid, boolean isGetLongText) {
 		String id = mid;
 		if (!TextUtils.isDigitsOnly(mid)) {
 			id = queryId(mid);
@@ -83,11 +84,15 @@ public class QueryIdApi extends BaseApi
 
 		WeiboParameters params = new WeiboParameters();
 		params.put("id", id);
+		if(isGetLongText) {
+			params.put("isGetLongText", 1);
+		}
 
 		try {
 			JSONObject json = request(Constants.SHOW, params, HTTP_GET);
 			return new Gson().fromJson(json.toString(), MessageModel.class);
 		} catch (Exception e) {
+			e.printStackTrace();
 		}
 		return null;
 	}

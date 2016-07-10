@@ -27,14 +27,10 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Environment;
 import com.google.gson.Gson;
-import info.papdt.blacklight.api.friendships.GroupsApi;
-import info.papdt.blacklight.api.statuses.BilateralTimeLineApi;
-import info.papdt.blacklight.api.statuses.HomeTimeLineApi;
+import info.papdt.blacklight.api.statuses.HotTimeLineApi;
 import info.papdt.blacklight.cache.Constants;
-import info.papdt.blacklight.cache.database.DataBaseHelper;
-import info.papdt.blacklight.cache.database.tables.HomeTimeLineTable;
+import info.papdt.blacklight.cache.database.tables.HotTimeLineTable;
 import info.papdt.blacklight.cache.file.FileCacheManager;
-import info.papdt.blacklight.cache.login.LoginApiCache;
 import info.papdt.blacklight.model.MessageListModel;
 import info.papdt.blacklight.model.MessageModel;
 import info.papdt.blacklight.support.Utility;
@@ -42,40 +38,21 @@ import info.papdt.blacklight.support.Utility;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.ref.SoftReference;
-import java.util.HashMap;
 
 /* Time Line of me and my friends */
-public class HomeTimeLineApiCache
+public class HotTimeLineApiCache extends HomeTimeLineApiCache
 {
-	protected static HashMap<Long, SoftReference<Bitmap>> mThumnnailCache = new HashMap<Long, SoftReference<Bitmap>>();
-
-	private static final String BILATERAL = "bilateral";
-
-	protected DataBaseHelper mHelper;
-	protected FileCacheManager mManager;
-	
-	public MessageListModel mMessages;
-
-	protected Context mContext;
-	protected String mMyUid;
-	
-	protected int mCurrentPage = 0;
-	protected boolean mFriendsOnly = false;
-
-	public HomeTimeLineApiCache(Context context) {
-		mHelper = DataBaseHelper.instance(context);
-		mManager = FileCacheManager.instance(context);
-		mContext = context;
-		mMyUid = new LoginApiCache(mContext).getUid();
+	public HotTimeLineApiCache(Context context) {
+		super(context);
 	}
-	
+	@Override
 	public void loadFromCache() {
 		Cursor cursor = query();
 		
 		if (cursor.getCount() == 1) {
 			cursor.moveToFirst();
 			mMessages = new Gson().fromJson(cursor.getString(1), getListClass());
-			mCurrentPage = mMessages.getSize() / Constants.HOME_TIMELINE_PAGE_SIZE;
+			mCurrentPage = mMessages.getSize() / Constants.HOT_TIMELINE_PAGE_SIZE;
 			mMessages.spanAll(mContext);
 			mMessages.timestampAll(mContext);
 		} else {
@@ -88,15 +65,11 @@ public class HomeTimeLineApiCache
 	}
 
 	public void load(boolean newWeibo) {
-		load(newWeibo, null);
-	}
-	
-	public void load(boolean newWeibo, String groupId) {
 		if (newWeibo) {
 			mCurrentPage = 0;
 		}
 		
-		MessageListModel list = load(groupId);
+		MessageListModel list = load();
 		
 		if (newWeibo) {
 			mMessages.getList().clear();
@@ -233,47 +206,32 @@ public class HomeTimeLineApiCache
 			// Just ignore
 		} finally {
 			Utility.notifyScanPhotos(mContext, ret);
-			return ret;
 		}
+		return ret;
 	}
-	
+	@Override
 	public void cache() {
 		SQLiteDatabase db = mHelper.getWritableDatabase();
 		db.beginTransaction();
-		db.execSQL(Constants.SQL_DROP_TABLE + HomeTimeLineTable.NAME);
-		db.execSQL(HomeTimeLineTable.CREATE);
+		db.execSQL(Constants.SQL_DROP_TABLE + HotTimeLineTable.NAME);
+		db.execSQL(HotTimeLineTable.CREATE);
 		
 		ContentValues values = new ContentValues();
-		values.put(HomeTimeLineTable.ID, 1);
-		values.put(HomeTimeLineTable.JSON, new Gson().toJson(mMessages));
+		values.put(HotTimeLineTable.ID, 1);
+		values.put(HotTimeLineTable.JSON, new Gson().toJson(mMessages));
 		
-		db.insert(HomeTimeLineTable.NAME, null, values);
+		db.insert(HotTimeLineTable.NAME, null, values);
 		
 		db.setTransactionSuccessful();
 		db.endTransaction();
 	}
 	
 	protected Cursor query() {
-		return mHelper.getReadableDatabase().query(HomeTimeLineTable.NAME, null, null, null, null, null, null);
+		return mHelper.getReadableDatabase().query(HotTimeLineTable.NAME, null, null, null, null, null, null);
 	}
-	
-	protected MessageListModel load(String groupId) {
-		if (groupId == null) {
-			return load();
-		} else if (groupId == BILATERAL) {
-			return BilateralTimeLineApi.fetchBilateralTimeLine(Constants.HOME_TIMELINE_PAGE_SIZE, ++mCurrentPage);
-		} else {
-			return GroupsApi.fetchGroupTimeLine(groupId, Constants.HOME_TIMELINE_PAGE_SIZE, ++mCurrentPage);
-		}
-	}
-
+	@Override
 	protected MessageListModel load() {
-		
-		if (!mFriendsOnly) {
-			mFriendsOnly = true;
-		}
-		
-		return HomeTimeLineApi.fetchHomeTimeLine(Constants.HOME_TIMELINE_PAGE_SIZE, ++mCurrentPage);
+		return HotTimeLineApi.fetchHotTimeLine(Constants.HOT_TIMELINE_PAGE_SIZE, ++mCurrentPage);
 	}
 	
 	protected Class<? extends MessageListModel> getListClass() {

@@ -23,22 +23,12 @@ import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
-import info.papdt.blacklight.cache.database.tables.CommentMentionsTimeLineTable;
-import info.papdt.blacklight.cache.database.tables.CommentTimeLineTable;
-import info.papdt.blacklight.cache.database.tables.DirectMessageUserTable;
-import info.papdt.blacklight.cache.database.tables.FavListTable;
-import info.papdt.blacklight.cache.database.tables.HomeTimeLineTable;
-import info.papdt.blacklight.cache.database.tables.MentionsTimeLineTable;
-import info.papdt.blacklight.cache.database.tables.RepostTimeLineTable;
-import info.papdt.blacklight.cache.database.tables.SearchHistoryTable;
-import info.papdt.blacklight.cache.database.tables.StatusCommentTable;
-import info.papdt.blacklight.cache.database.tables.UserTimeLineTable;
-import info.papdt.blacklight.cache.database.tables.UsersTable;
+import info.papdt.blacklight.cache.database.tables.*;
 
 public class DataBaseHelper extends SQLiteOpenHelper {
 
 	private static String DB_NAME = "weibo_data";
-	private static int DB_VER = 15;
+	private static int DB_VER = 16;
 	
 	private static DataBaseHelper instance;
 	
@@ -50,6 +40,7 @@ public class DataBaseHelper extends SQLiteOpenHelper {
 	public void onCreate(SQLiteDatabase db) {
 		db.execSQL(UsersTable.CREATE);
 		db.execSQL(HomeTimeLineTable.CREATE);
+		db.execSQL(HotTimeLineTable.CREATE);
 		db.execSQL(UserTimeLineTable.CREATE);
 		db.execSQL(MentionsTimeLineTable.CREATE);
 		db.execSQL(CommentTimeLineTable.CREATE);
@@ -68,6 +59,9 @@ public class DataBaseHelper extends SQLiteOpenHelper {
 		} else if (from == 14) {
 			db.execSQL(SearchHistoryTable.CREATE);
 		}
+		if (from < 16) {
+			db.execSQL(HotTimeLineTable.CREATE);
+		}
 	}
 	
 	public static synchronized DataBaseHelper instance(Context context) {
@@ -83,6 +77,7 @@ public class DataBaseHelper extends SQLiteOpenHelper {
 		db.beginTransaction();
 		db.delete(UsersTable.NAME, null, null);
 		db.delete(HomeTimeLineTable.NAME, null, null);
+		db.delete(HotTimeLineTable.NAME, null, null);
 		db.delete(UserTimeLineTable.NAME, null, null);
 		db.delete(MentionsTimeLineTable.NAME, null, null);
 		db.delete(CommentTimeLineTable.NAME, null, null);

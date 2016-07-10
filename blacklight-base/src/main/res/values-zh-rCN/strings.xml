@@ -42,6 +42,7 @@
 
 	<string-array name="main_tabs">
 		<item>首页</item>
+		<item>热门</item>
 		<item>评论</item>
 		<item>提及的微博</item>
 		<item>提及的评论</item>

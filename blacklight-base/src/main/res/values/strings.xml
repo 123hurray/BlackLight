@@ -48,6 +48,7 @@
 
 	<string-array name="main_tabs">
 		<item>Home</item>
+		<item>Hot</item>
 		<item>Comments</item>
 		<item>Mentioning Posts</item>
 		<item>Mentioning Comments</item>
